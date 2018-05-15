@@ -84,7 +84,7 @@ class UploadBehavior extends Behavior
      */
     public function beforeInsert()
     {
-        if ($this->checkDelete()) {
+        if (!$this->checkDeleted()) {
             $this->saveFile($this->getAttribute());
         }
     }
@@ -94,11 +94,7 @@ class UploadBehavior extends Behavior
      */
     public function beforeUpdate()
     {
-        if (!$this->checkDelete()) {
-            if ($this->isAttributeChanged()) {
-                $this->deleteFile($this->getOldAttribute());
-            }
-        } else {
+        if (!$this->checkDeleted()) {
             if (
                 $this->isAttributeChanged() &&
                 $this->saveFile($this->getAttribute()) &&
@@ -110,20 +106,6 @@ class UploadBehavior extends Behavior
     }
 
     /**
-     * Function will be called before inserting and updating the record.
-     */
-    private function checkDelete()
-    {
-        $result = true;
-        if (!empty(Yii::$app->request->post('delete')[$this->attribute])) {
-            $this->deleteFile($this->getAttribute());
-            $this->owner->setAttribute($this->attribute, null);
-            $result = false;
-        }
-        return $result;
-    }
-
-    /**
      * Function will be called before deleting the record.
      */
     public function beforeDelete()
@@ -131,6 +113,25 @@ class UploadBehavior extends Behavior
         if ($this->unlinkOnDelete === true) {
             $this->deleteFile($this->getAttribute());
         }
+    }
+
+    /**
+     * Function checks if isset $_POST['delete']['$this->attribute'] and deletes related file.
+     * @return boolean
+     */
+    private function checkDeleted()
+    {
+        $result = false;
+        if (!empty(Yii::$app->request->post('delete')[$this->attribute])) {
+            if ($this->isAttributeChanged()) {
+                $this->deleteFile($this->getOldAttribute());
+            } else {
+                $this->deleteFile($this->getAttribute());
+            }
+            $this->owner->setAttribute($this->attribute, null);
+            $result = true;
+        }
+        return $result;
     }
 
     /**
