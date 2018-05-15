@@ -1,6 +1,7 @@
 <?php
 /**
  * @var yii\web\View $this
+ * @var boolean $deletable
  */
 
 use yii\helpers\Html;
