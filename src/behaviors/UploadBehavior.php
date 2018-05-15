@@ -94,7 +94,11 @@ class UploadBehavior extends Behavior
      */
     public function beforeUpdate()
     {
-        if ($this->checkDelete()) {
+        if (!$this->checkDelete()) {
+            if ($this->isAttributeChanged()) {
+                $this->deleteFile($this->getOldAttribute());
+            }
+        } else {
             if (
                 $this->isAttributeChanged() &&
                 $this->saveFile($this->getAttribute()) &&
