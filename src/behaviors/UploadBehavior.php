@@ -84,7 +84,9 @@ class UploadBehavior extends Behavior
      */
     public function beforeInsert()
     {
-        $this->saveFile($this->getAttribute());
+        if ($this->checkDelete()) {
+            $this->saveFile($this->getAttribute());
+        }
     }
 
     /**
@@ -92,13 +94,29 @@ class UploadBehavior extends Behavior
      */
     public function beforeUpdate()
     {
-        if (
-            $this->isAttributeChanged() &&
-            $this->saveFile($this->getAttribute()) &&
-            $this->unlinkOldFile === true
-        ) {
-            $this->deleteFile($this->getOldAttribute());
+        if ($this->checkDelete()) {
+            if (
+                $this->isAttributeChanged() &&
+                $this->saveFile($this->getAttribute()) &&
+                $this->unlinkOldFile === true
+            ) {
+                $this->deleteFile($this->getOldAttribute());
+            }
         }
+    }
+
+    /**
+     * Function will be called before inserting and updating the record.
+     */
+    private function checkDelete()
+    {
+        $result = true;
+        if (!empty(Yii::$app->request->post('delete')[$this->attribute])) {
+            $this->deleteFile($this->getAttribute());
+            $this->owner->setAttribute($this->attribute, null);
+            $result = false;
+        }
+        return $result;
     }
 
     /**
